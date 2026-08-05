@@ -44,6 +44,10 @@ groups:
               value: 'oracle_cloud'
               brief: 'Oracle Cloud Infrastructure (OCI)'
               stability: development
+            - id: 'scaleway_cloud'
+              value: 'scaleway_cloud'
+              brief: 'Scaleway Cloud'
+              stability: development
             - id: 'tencent_cloud'
               value: 'tencent_cloud'
               brief: 'Tencent Cloud'
@@ -60,7 +64,9 @@ groups:
         stability: development
         brief: >
           The cloud account ID the resource is assigned to.
-        examples: ['111111111111', 'opentelemetry']
+        note: >
+          For Azure, this is the subscription ID.
+        examples: ['111111111111', 'opentelemetry', '22222222-2222-2222-2222-222222222222']
       - id: cloud.region
         type: string
         stability: development
@@ -308,6 +314,10 @@ groups:
             - id: oracle_cloud_oke
               value: 'oracle_cloud_oke'
               brief: Kubernetes Engine (OKE) on Oracle Cloud Infrastructure (OCI)
+              stability: development
+            - id: scaleway_cloud_compute
+              value: 'scaleway_cloud_compute'
+              brief: Compute on Scaleway Cloud
               stability: development
             - id: tencent_cloud_cvm
               value: 'tencent_cloud_cvm'

@@ -10,7 +10,10 @@ linkTitle: Oracle Database
 
 - [Spans](#spans)
 - [Context propagation](#context-propagation)
+  - [Application Context](#application-context)
   - [V$SESSION.ACTION](#vsessionaction)
+  - [Choice of Propagation Mechanism](#choice-of-propagation-mechanism)
+    - [Co-existence & Recommendation Guidance](#co-existence--recommendation-guidance)
 - [Metrics](#metrics)
 
 <!-- END doctoc -->
@@ -43,16 +46,16 @@ Spans representing calls to a Oracle SQL Database adhere to the general [Semanti
 | [`error.type`](/docs/registry/attributes/error.md) | ![Stable](https://img.shields.io/badge/-stable-lightgreen) | `Conditionally Required` If and only if the operation failed. | string | Describes a class of error the operation ended with. [3] | `timeout`; `java.net.UnknownHostException`; `server_certificate_invalid`; `500` |
 | [`server.port`](/docs/registry/attributes/server.md) | ![Stable](https://img.shields.io/badge/-stable-lightgreen) | `Conditionally Required` [4] | int | Server port number. [5] | `80`; `8080`; `443` |
 | [`db.collection.name`](/docs/registry/attributes/db.md) | ![Stable](https://img.shields.io/badge/-stable-lightgreen) | `Recommended` [6] | string | The name of a collection (table, container) within the database. [7] | `public.users`; `customers` |
-| [`db.operation.batch.size`](/docs/registry/attributes/db.md) | ![Stable](https://img.shields.io/badge/-stable-lightgreen) | `Recommended` | int | The number of queries included in a batch operation. [8] | `2`; `3`; `4` |
+| [`db.operation.batch.size`](/docs/registry/attributes/db.md) | ![Stable](https://img.shields.io/badge/-stable-lightgreen) | `Recommended` | int | The number of database operations included in a batch operation. [8] | `2`; `3`; `4` |
 | [`db.operation.name`](/docs/registry/attributes/db.md) | ![Stable](https://img.shields.io/badge/-stable-lightgreen) | `Recommended` [9] | string | The name of the operation or command being executed. [10] | `EXECUTE`; `INSERT` |
 | [`db.query.summary`](/docs/registry/attributes/db.md) | ![Stable](https://img.shields.io/badge/-stable-lightgreen) | `Recommended` [11] | string | Low cardinality summary of a database query. [12] | `SELECT wuser_table`; `INSERT shipping_details SELECT orders`; `get user by id` |
-| [`db.query.text`](/docs/registry/attributes/db.md) | ![Stable](https://img.shields.io/badge/-stable-lightgreen) | `Recommended` [13] | string | The database query being executed. [14] | `SELECT * FROM wuser_table where username = :mykey` |
+| [`db.query.text`](/docs/registry/attributes/db.md) | ![Stable](https://img.shields.io/badge/-stable-lightgreen) | `Recommended` [13] | string | The database query being executed. [14] | `SELECT * FROM wuser_table where username = ?` |
 | [`db.stored_procedure.name`](/docs/registry/attributes/db.md) | ![Stable](https://img.shields.io/badge/-stable-lightgreen) | `Recommended` [15] | string | The name of a stored procedure within the database. [16] | `GetCustomer` |
-| [`oracle.db.domain`](/docs/registry/attributes/oracledb.md) | ![Development](https://img.shields.io/badge/-development-blue) | `Recommended` | string | The database domain associated with the connection. [17] | `example.com`; `corp.internal`; `prod.db.local` |
-| [`oracle.db.instance.name`](/docs/registry/attributes/oracledb.md) | ![Development](https://img.shields.io/badge/-development-blue) | `Recommended` | string | The instance name associated with the connection in an Oracle Real Application Clusters environment. [18] | `ORCL1`; `ORCL2`; `ORCL3` |
-| [`oracle.db.name`](/docs/registry/attributes/oracledb.md) | ![Development](https://img.shields.io/badge/-development-blue) | `Recommended` | string | The database name associated with the connection. [19] | `ORCL1`; `FREE` |
-| [`oracle.db.pdb`](/docs/registry/attributes/oracledb.md) | ![Development](https://img.shields.io/badge/-development-blue) | `Recommended` | string | The pluggable database (PDB) name associated with the connection. [20] | `PDB1`; `FREEPDB` |
-| [`oracle.db.service`](/docs/registry/attributes/oracledb.md) | ![Development](https://img.shields.io/badge/-development-blue) | `Recommended` | string | The service name currently associated with the database connection. [21] | `order-processing-service`; `db_low.adb.oraclecloud.com`; `db_high.adb.oraclecloud.com` |
+| [`oracle.db.domain`](/docs/registry/attributes/oracledb.md) | ![Release Candidate](https://img.shields.io/badge/-rc-mediumorchid) | `Recommended` | string | The database domain associated with the connection. [17] | `example.com`; `corp.internal`; `prod.db.local` |
+| [`oracle.db.instance.name`](/docs/registry/attributes/oracledb.md) | ![Release Candidate](https://img.shields.io/badge/-rc-mediumorchid) | `Recommended` | string | The instance name associated with the connection in an Oracle Real Application Clusters environment. [18] | `ORCL1`; `ORCL2`; `ORCL3` |
+| [`oracle.db.name`](/docs/registry/attributes/oracledb.md) | ![Release Candidate](https://img.shields.io/badge/-rc-mediumorchid) | `Recommended` | string | The database name associated with the connection. [19] | `ORCL1`; `FREE` |
+| [`oracle.db.pdb`](/docs/registry/attributes/oracledb.md) | ![Release Candidate](https://img.shields.io/badge/-rc-mediumorchid) | `Recommended` | string | The pluggable database (PDB) name associated with the connection. [20] | `PDB1`; `FREEPDB` |
+| [`oracle.db.service`](/docs/registry/attributes/oracledb.md) | ![Release Candidate](https://img.shields.io/badge/-rc-mediumorchid) | `Recommended` | string | The service name currently associated with the database connection. [21] | `order-processing-service`; `db_low.adb.oraclecloud.com`; `db_high.adb.oraclecloud.com` |
 | [`server.address`](/docs/registry/attributes/server.md) | ![Stable](https://img.shields.io/badge/-stable-lightgreen) | `Recommended` | string | Name of the database host. [22] | `example.com`; `10.1.2.80`; `/tmp/my.sock` |
 | [`db.query.parameter.<key>`](/docs/registry/attributes/db.md) | ![Development](https://img.shields.io/badge/-development-blue) | `Opt-In` | string | A database query parameter, with `<key>` being the parameter name, and the attribute value being a string representation of the parameter value. [23] | `someval`; `55` |
 | [`db.response.returned_rows`](/docs/registry/attributes/db.md) | ![Development](https://img.shields.io/badge/-development-blue) | `Opt-In` | int | Number of rows returned by the operation. [24] | `10`; `30`; `1000` |
@@ -73,7 +76,28 @@ Instrumentations SHOULD document how `error.type` is populated.
 
 **[7] `db.collection.name`:** The collection name SHOULD NOT be extracted from `db.query.text`.
 
-**[8] `db.operation.batch.size`:** Operations are only considered batches when they contain two or more operations, and so `db.operation.batch.size` SHOULD never be `1`.
+**[8] `db.operation.batch.size`:** Except for empty batch requests described below, a batch operation contains two
+or more database operations explicitly submitted as separate operations in a single
+client call, protocol message, or database command.
+
+Requests to batch APIs that contain only one operation SHOULD be modeled as single
+operations, not as batch operations.
+
+A database call is not a batch operation solely because one operation accepts
+multiple operands, such as keys, rows, documents, points, or other data elements,
+including Redis [`MGET`](https://redis.io/docs/latest/commands/mget/) with
+multiple keys.
+
+In batch APIs that execute the same parameterized operation with parameter sets,
+each parameter set represents one database operation for determining whether the
+request is a batch operation. Requests with only one parameter set SHOULD be modeled
+as single operations, not as batch operations.
+
+`db.operation.batch.size` SHOULD be set to the number of operations in the batch.
+It SHOULD NOT be set for non-batch operations.
+
+A request to execute a batch operation with no operations SHOULD also be treated
+as a batch operation, and `db.operation.batch.size` SHOULD be set to `0`.
 
 **[9] `db.operation.name`:** If the operation is executed via a higher-level API that does not support multiple operation names.
 
@@ -96,9 +120,12 @@ then that query summary SHOULD be used prepended by `BATCH `,
 otherwise `db.query.summary` SHOULD be `BATCH` or some other database
 system specific term if more applicable.
 
-**[13] `db.query.text`:** Non-parameterized query text SHOULD NOT be collected by default unless explicitly configured and sanitized to exclude sensitive data, e.g. by redacting all literal values present in the query text. See [Sanitization of `db.query.text`](/docs/db/database-spans.md#sanitization-of-dbquerytext). Parameterized query text MUST also NOT be collected by default unless explicitly configured. The query parameter values themselves are opt-in, see [`db.query.parameter.<key>`](../registry/attributes/db.md)).
+**[13] `db.query.text`:** Non-parameterized query text SHOULD NOT be collected by default unless there is sanitization that excludes sensitive data, e.g. by redacting all literal values present in the query text. See [Sanitization of `db.query.text`](/docs/db/database-spans.md#sanitization-of-dbquerytext).
+Parameterized query text SHOULD be collected by default (the query parameter values themselves are opt-in, see [`db.query.parameter.<key>`](/docs/registry/attributes/db.md)).
 
-**[14] `db.query.text`:** For sanitization see [Sanitization of `db.query.text`](/docs/db/database-spans.md#sanitization-of-dbquerytext). For batch operations, if the individual operations are known to have the same query text then that query text SHOULD be used, otherwise all of the individual query texts SHOULD be concatenated with separator `; ` or some other database system specific separator if more applicable.
+**[14] `db.query.text`:** For sanitization see [Sanitization of `db.query.text`](/docs/db/database-spans.md#sanitization-of-dbquerytext).
+For batch operations, if the individual operations are known to have the same query text then that query text SHOULD be used, otherwise all of the individual query texts SHOULD be concatenated with separator `; ` or some other database system specific separator if more applicable.
+Parameterized query text SHOULD NOT be sanitized. Even though parameterized query text can potentially have sensitive data, by using a parameterized query the user is giving a strong signal that any sensitive data will be passed as parameter values, and the benefit to observability of capturing the static part of the query text by default outweighs the risk.
 
 **[15] `db.stored_procedure.name`:** If operation applies to a specific stored procedure.
 
@@ -126,7 +153,7 @@ without issuing an additional query (such as `SELECT SYS_CONTEXT`), it is
 RECOMMENDED to fall back to the PDB name specified at connection establishment.
 
 **[21] `oracle.db.service`:** The effective service name for a connection can change during its lifetime,
-for example after executing sql, `ALTER SESSION`. If an instrumentation cannot reliably
+for example after executing SQL, `ALTER SESSION`. If an instrumentation cannot reliably
 obtain the current service name for each operation without issuing an additional
 query (such as `SELECT SYS_CONTEXT`), it is RECOMMENDED to fall back to the
 service name originally provided at connection establishment.
@@ -140,7 +167,12 @@ then `<key>` SHOULD be the 0-based index.
 up with the parameterized placeholders present in `db.query.text`.
 
 It is RECOMMENDED to capture the value as provided by the application
-without attempting to do any case normalization.
+without attempting to do any case normalization or sanitization.
+
+Instrumentations SHOULD NOT capture `db.query.parameter.<key>` by default
+since values may contain PII or sensitive details.
+Application operators are expected to enable specific keys depending
+on their privacy and security considerations.
 
 `db.query.parameter.<key>` SHOULD NOT be captured on batch operations.
 
@@ -185,33 +217,184 @@ and SHOULD be provided **at span creation time** (if provided at all):
 
 **Status**: [Development][DocumentStatus]
 
+### Application Context
+
+Instrumentations MAY propagate context by using an Oracle driver mechanism that piggybacks application context to the server in the same round trip as the SQL statement. Context injection SHOULD NOT be enabled by default, but instrumentations MAY allow users to opt into it.
+
+When using W3C Trace Context, instrumentations SHOULD inject a valid [`traceparent`](https://www.w3.org/TR/trace-context/#traceparent-header). If a valid [`tracestate`](https://www.w3.org/TR/trace-context/#tracestate-header) is present, instrumentations MAY inject it together with `traceparent` as part of the propagated trace context value.
+
+Instrumentations that propagate context MUST use the Oracle driver API on the same connection that executes the SQL statement. Instrumentations SHOULD use driver APIs that associate the context with statement execution without requiring an additional database call.
+
+When the Oracle driver exposes an application context API, instrumentations SHOULD use that API to associate the trace context in the [CLIENTCONTEXT](https://node-oracledb.readthedocs.io/en/latest/user_guide/connection_handling.html#setting-application-contexts-on-a-connection-object) namespace using the key `ora$opentelem$tracectx`. For example, in Java (`oracle.jdbc`), this is supported via [JDBC Connection Tracing APIs](https://docs.oracle.com/en/database/oracle/oracle-database/26/jajdb/oracle/jdbc/OracleConnection.html#Tracing) by enabling server-side telemetry and setting `clientcontext.ora$opentelem$tracectx` using `setClientInfo`.
+
+The value of `ora$opentelem$tracectx` MUST use this exact field order and syntax:
+
+```text
+traceparent: SP traceparent-value CRLF
+[tracestate: SP tracestate-value CRLF]
+```
+
+`SP` is one ASCII space byte (`0x20`). `CRLF` is the two-byte sequence carriage return (`0x0D`) followed by line feed (`0x0A`), represented as `\r\n`. `traceparent-value` is a value valid under the W3C Trace Context `traceparent` definition. `tracestate-value` is a comma-delimited list of `key=value` list-members valid under the W3C Trace Context `tracestate` definition. The bracketed `tracestate` line is optional as a whole. When `tracestate` is absent or empty, instrumentations MUST NOT emit the `tracestate` line. Instrumentations MUST NOT include any other fields in this value or add whitespace other than the required `SP` or extra line terminators.
+
+Example payload with both fields present, shown as a quoted string so the line terminators are unambiguous:
+
+```text
+"traceparent: 00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-01\r\ntracestate: congo=t61rcWkgMzE\r\n"
+```
+
+Example payload when `tracestate` is absent:
+
+```text
+"traceparent: 00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-01\r\n"
+```
+
+Although `Application Context` is not constrained by the 64-byte limit of `V$SESSION.ACTION`, it is subject to a 4000-byte application-context limit (see the [`SYS_CONTEXT`](https://docs.oracle.com/en/database/oracle/oracle-database/26/sqlrf/SYS_CONTEXT.html) documentation). This mechanism requires support from both the database client driver and the database server version in use. If the encoded value would exceed 4000 bytes, instrumentations MUST NOT truncate it at an arbitrary byte boundary; they MAY omit the `tracestate` line or remove whole `tracestate` list-members as permitted by W3C Trace Context. End-to-end tracing works only when the database server is also explicitly configured to enable tracing.
+
+Compared with `V$SESSION.ACTION`, `Application Context` avoids overloading a field that applications may already use.
+
+`Application Context` stores trace context in the Oracle `CLIENTCONTEXT` namespace and does not expose the propagated values through `V$SESSION.ACTION`.
+
+The values stored in `CLIENTCONTEXT` are session state and can persist across statement executions unless the underlying driver automatically scopes or clears their lifetime.
+
+When the underlying driver automatically manages the lifetime of `CLIENTCONTEXT`, instrumentations do not need to perform additional cleanup. Otherwise, instrumentations SHOULD manage the lifecycle of `ora$opentelem$tracectx` to prevent stale trace context from propagating across statement executions or pooled connections—including [Database Resident Connection Pooling (DRCP)](https://docs.oracle.com/en/database/oracle/oracle-database/26/adfns/performance-and-scalability.html#GUID-015CA8C1-2386-4626-855D-CC546DDC1086).
+
+- **Post-Execution Cleanup:** Instrumentations SHOULD clear or reset the `ora$opentelem$tracectx` entry immediately following statement execution (for example, in a `finally` block).
+
+If explicit post-execution teardown is not supported by the underlying driver API, instrumentations SHOULD clear or overwrite `ora$opentelem$tracectx` prior to executing any subsequent statement where active context propagation is disabled or absent.
+
+For guidance on selecting between mechanisms, legacy fallbacks, or running both concurrently, see [Choice of Propagation Mechanism](#choice-of-propagation-mechanism).
+
+Note that Oracle database drivers in different languages expose different APIs for enabling `Application Context`. In .NET, users enable server-side propagation with the `DatabaseOpenTelemetryTracing` property on an ODP.NET connection. The following example targets [ODP.NET Core](https://docs.oracle.com/en/database/oracle/oracle-database/26/odpnt/featOpenTelemetry.html#GUID-498BB919-43C4-494F-A73B-74980C40CFF3), version 23.26.2 or later.
+
+Example:
+
+```csharp
+using OpenTelemetry;
+using OpenTelemetry.Trace;
+using Oracle.ManagedDataAccess.Client;
+
+// 1. Setup the OpenTelemetry Tracer Provider targeting the Oracle driver source
+using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+    .AddSource("Oracle.ManagedDataAccess.Core")
+    .AddOtlpExporter() // Exports this application's spans to an OTLP collector.
+    .Build();
+
+string connectString = "<your_connection_string>";
+
+using (OracleConnection connection = new OracleConnection(connectString))
+{
+    using (OracleCommand command = connection.CreateCommand())
+    {
+        connection.Open();
+        try
+        {
+            // 2. Opt in to client context piggybacking.
+            // The driver automatically serializes the active W3C trace context
+            // into CLIENTCONTEXT (ora$opentelem$tracectx) during subsequent executions.
+            connection.DatabaseOpenTelemetryTracing = true;
+
+            // 3. Execute traced queries.
+            command.CommandText = "INSERT INTO MYTABLE VALUES ('val1', 100)";
+            command.ExecuteNonQuery();
+
+            command.CommandText = "SELECT COL2 FROM MYTABLE WHERE COL2 = 100";
+            using (OracleDataReader reader = command.ExecuteReader())
+            {
+                // Consume the results
+            }
+        }
+        finally
+        {
+            // 4. Disable Application Context propagation for subsequent operations.
+            connection.DatabaseOpenTelemetryTracing = false;
+        }
+
+        connection.Close();
+    }
+}
+```
+
+For detailed configuration of native in-database observability capabilities, trace management, and OTLP collector endpoint setups, refer to the official [Oracle Database OpenTelemetry Observability Architecture](https://docs.oracle.com/en/database/oracle/oracle-database/26/tgsql/observabilitly-open-telemetry.html) and the administrative [DBMS_OBSERVABILITY Package Reference](https://docs.oracle.com/en/database/oracle/oracle-database/26/arpls/dbms_observability.html).
+
 ### V$SESSION.ACTION
 
 Instrumentations MAY propagate context with a fixed-length, 64 byte value using [V$SESSION.ACTION](https://docs.oracle.com/en/database/oracle/oracle-database/23/refrn/V-SESSION.html) by injecting part of span context (trace-id, span-id, trace-flags, protocol version) before executing a query. For example, when using W3C Trace Context, only a string representation of [`traceparent`](https://www.w3.org/TR/trace-context/#traceparent-header) SHOULD be injected. Context injection SHOULD NOT be enabled by default, but instrumentation MAY allow users to opt into it.
 
 Variable context parts (`tracestate`, `baggage`) SHOULD NOT be injected since `V$SESSION.ACTION` value length is limited to 64 bytes.
 
-Instrumentations that propagate context MUST update `V$SESSION.ACTION` on the same physical connection as the SQL statement.
+Instrumentations that propagate context MUST update `V$SESSION.ACTION` on the same connection that executes the SQL statement.
 
-Example:
+`V$SESSION.ACTION` is persistent session state and can persist across statement executions. When connection pools—including [Database Resident Connection Pooling (DRCP)](https://docs.oracle.com/en/database/oracle/oracle-database/26/adfns/performance-and-scalability.html#GUID-015CA8C1-2386-4626-855D-CC546DDC1086)—reuse a database session, any leftover `ACTION` value may be inherited by subsequent statements.
 
-Note that Oracle database drivers in different languages may have different implementation to update `V$SESSION.ACTION`.
+To prevent stale trace context from propagating across statement executions or pooled connections, instrumentations SHOULD scope `V$SESSION.ACTION` to the execution frame of the instrumented database operation.
 
-For a query `SELECT * FROM songs` where `traceparent` is `00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-01`:
+- **Post-Execution Cleanup:** Instrumentations SHOULD restore or clear `V$SESSION.ACTION` immediately following statement execution (for example, in a `finally` block).
 
-Run the following command on the same physical connection as the SQL statement:
+If explicit post-execution cleanup is not supported by the underlying driver API, instrumentations SHOULD clear or overwrite `V$SESSION.ACTION` before executing any subsequent statement where active context propagation is disabled or absent.
 
-```sql
-BEGIN
-    DBMS_APPLICATION_INFO.SET_ACTION('00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-01');
-END;
+Enabling `ACTION` propagation gives the instrumentation ownership of the `V$SESSION.ACTION` value for the duration of the propagation window. Because database driver interfaces are generally write-only, instrumentations cannot inspect or preserve a pre-existing application-set `ACTION` value. Instrumentations SHOULD document that enabling this feature overwrites any existing `ACTION` metadata for the duration of propagation and that the previous value is not restored automatically.
+
+Instrumentations MAY update `V$SESSION.ACTION` independently or alongside `Application Context`. See [Choice of Propagation Mechanism](#choice-of-propagation-mechanism) for details on combining these mechanisms.
+
+Oracle database drivers in different languages expose different APIs for updating `V$SESSION.ACTION`.
+Instrumentations SHOULD use the driver-provided API when available rather than issuing SQL or PL/SQL (for example, `DBMS_APPLICATION_INFO.SET_ACTION`) directly, since driver APIs can piggyback the updated `ACTION` value with the subsequent statement execution without requiring an additional database call.
+
+For example, in [node-oracledb](https://node-oracledb.readthedocs.io/en/latest/api_manual/connection.html#connection.action), instrumentation can set the `action` property on the connection before executing statements:
+
+```javascript
+import oracledb from "oracledb";
+
+// The instrumentation sets the current W3C traceparent.
+const traceparent =
+    "00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-01";
+
+const connection = await oracledb.getConnection({
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  connectString: process.env.DB_CONNECT_STRING,
+});
+
+try {
+  // 1. Traceable SQL Execution (SQL 1)
+  try {
+    // Inject traceparent prior to executing the traced statement
+    connection.action = traceparent;
+    await connection.execute("SELECT * FROM songs WHERE genre = :1", ["rock"]);
+  } finally {
+    // Clear ACTION so subsequent statements on this connection
+    // do not inherit the previous trace context.
+    connection.action = null;
+  }
+
+  // 2. Untraced SQL Execution on the same connection (SQL 2)
+  // E.g., internal maintenance, pool validation, or non-instrumented statement
+  await connection.execute(
+    "UPDATE user_sessions SET last_active = SYSDATE WHERE id = :1",
+    [101]
+  );
+} finally {
+  await connection.close();
+}
 ```
 
-Then run the query:
+### Choice of Propagation Mechanism
 
-```sql
-SELECT * FROM songs;
-```
+When selecting a context propagation strategy for Oracle Database, telemetry implementations SHOULD use `Application Context` for native distributed tracing, and MAY combine it with `V$SESSION.ACTION` for out-of-band query sampling.
+
+| Mechanism | Implementation Type | Minimum Stack Requirements | Behavior |
+| :--- | :--- | :--- | :--- |
+| **Application Context** | **Native Distributed Tracing** | • **Client:** Oracle JDBC Driver 23.26.2+ or ODP.NET (managed or core) 23.26.2+<br><br>• **Server:** Oracle AI Database 26ai (server version 23.26.2 or later) | Injects W3C trace context into the CLIENTCONTEXT namespace. Context piggybacks on existing database round-trips without additional network calls. |
+| **V$SESSION.ACTION** | **Out-of-Band Query Sampling** | Works on all Oracle Database versions | Exposes `traceparent` in `V$SESSION` for external polling components (e.g., `oracledbreceiver`) to correlate server-side execution plans, wait events, and lock graphs to client spans. |
+
+#### Co-existence & Recommendation Guidance
+
+- **Native Distributed Tracing:** `Application Context` is the preferred method of correlation when driver and database support are present.
+
+- **Out-of-Band Diagnostic Sampling:** `V$SESSION.ACTION` remains essential because it exposes the active `traceparent` to external collectors (such as [`oracledbreceiver`](https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/receiver/oracledbreceiver)), enabling them to correlate query samples, execution plans, wait events, and lock information collected from Oracle dynamic performance views with the originating client span.
+
+- **Concurrent Usage:** Instrumentations MAY enable **both** mechanisms simultaneously. Enabling `Application Context` alongside `V$SESSION.ACTION` creates native distributed spans while allowing out-of-band query samplers to correlate the receiver-specific [`db.server.query_sample` event](https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/e3399f435a64b0a5aea33cc8d98edfef5bf07449/receiver/oracledbreceiver/documentation.md#dbserverquery_sample) and its database diagnostics with the originating `traceparent`.
+
+- **Legacy Fallback:** In environments where driver or database versions do not support `Application Context`, `V$SESSION.ACTION` MAY be used independently as a passive correlation mechanism.
 
 ## Metrics
 
